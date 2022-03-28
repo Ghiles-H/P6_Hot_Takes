@@ -1,0 +1,33 @@
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+
+
+exports.generateAccessToken = (user) => {
+  let token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '12h' });
+  
+  return token;
+}
+
+const authenticateToken = (req, res, next) => {
+  const token = req.headers.authorization.split(' ')[1];
+  const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+  const userId = decodedToken.id;
+
+  console.log(decodedToken);
+  console.log(token);
+  if (req.body.userId && req.body.userId !== userId){
+    throw 'Invalid user ID'
+  }else{
+    req.userId = userId;
+    next();
+  }
+}
+exports.authToken = (req, res, next) => {
+  try{
+    authenticateToken(req, res, next);
+  }catch{
+    res.status(401).json({
+      error: new Error('Invalid request !')
+    })
+  }
+}
